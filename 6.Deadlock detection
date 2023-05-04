@@ -1,0 +1,69 @@
+#include <stdio.h>
+#include <stdbool.h>
+
+#define P 3 // number of processes
+#define R 3 // number of resources
+
+int max[P][R] = { {3, 6, 8}, {4, 3, 3}, {3, 4, 4} }; // maximum resource requirements of each process
+int alloc[P][R] = { {3, 3, 3}, {2, 0, 3}, {1, 2, 4} }; // resource allocations to each process
+int avail[R] = { 1, 2, 0 }; // number of available resources
+
+bool finish[P] = { false }; // whether a process has finished executing or not
+int safeSeq[P]; // safe sequence of processes
+
+bool isSafe() {
+    int need[P][R]; // remaining resource needs of each process
+    for (int i = 0; i < P; i++) {
+        for (int j = 0; j < R; j++) {
+            need[i][j] = max[i][j] - alloc[i][j];
+        }
+    }
+    int work[R]; // available resources that can be allocated to a process
+    for (int i = 0; i < R; i++) {
+        work[i] = avail[i];
+    }
+    int count = 0; // count of finished processes
+    while (count < P) {
+        bool found = false;
+        for (int i = 0; i < P; i++) {
+            if (!finish[i]) {
+                bool canBeAllocated = true;
+                for (int j = 0; j < R; j++) {
+                    if (need[i][j] > work[j]) {
+                        canBeAllocated = false;
+                        break;
+                    }
+                }
+                if (canBeAllocated) {
+                    for (int j = 0; j < R; j++) {
+                        work[j] += alloc[i][j];
+                    }
+                    safeSeq[count] = i;
+                    finish[i] = true;
+                    count++;
+                    found = true;
+                }
+            }
+        }
+        if (!found) {
+            return false; // deadlock detected
+        }
+    }
+    return true; // no deadlock detected
+}
+
+int main() {
+    if (isSafe()) {
+        printf("No deadlock detected\n");
+    } else {
+        printf("Deadlock detected\n");
+        printf("Deadlocked processes: ");
+        for (int i = 0; i < P; i++) {
+            if (!finish[i]) {
+                printf("%d ", i);
+            }
+        }
+        printf("\n");
+    }
+    return 0;
+}
